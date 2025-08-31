@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>241044</title>
 
-  <!-- Firebase SDKs (copied from your snippet) -->
   <script defer src="/__/firebase/12.2.1/firebase-app-compat.js"></script>
   <script defer src="/__/firebase/12.2.1/firebase-auth-compat.js"></script>
   <script defer src="/__/firebase/12.2.1/firebase-database-compat.js"></script>
@@ -17,7 +16,6 @@
   <script defer src="/__/firebase/12.2.1/firebase-analytics-compat.js"></script>
   <script defer src="/__/firebase/12.2.1/firebase-remote-config-compat.js"></script>
   <script defer src="/__/firebase/12.2.1/firebase-performance-compat.js"></script>
-  <!-- initialize the SDK after features are loaded; using emulator flag as in your snippet -->
   <script defer src="/__/firebase/init.js?useEmulator=true"></script>
 
   <style>
@@ -102,25 +100,18 @@
       position: sticky;
       left: 0;
       z-index: 100;
-      /* keep above other cells */
       background-color: var(--bg) !important;
-      /* solid background for light/dark */
       border-right: 2px solid var(--border);
-      /* visible border */
       min-width: 92px;
       width: 92px;
       text-align: center;
       font-weight: 700;
       padding: 10px;
       box-shadow: 4px 0 8px -4px rgba(0, 0, 0, 0.06);
-      /* subtle shadow for separation */
       background-clip: padding-box;
-      /* prevents border bleed */
       transform: translateZ(0);
-      /* avoids flicker in some browsers */
     }
 
-    /* header time cell slightly higher stacking */
     thead th.time-col {
       z-index: 110;
     }
@@ -180,7 +171,6 @@
       }
     }
 
-    /* stronger shadow only while scrolling */
     .wrap.scrolling th.time-col,
     .wrap.scrolling td.time-col {
       box-shadow: 6px 0 10px -4px rgba(0, 0, 0, 0.15);
@@ -222,14 +212,7 @@
 <body>
 
   <div class="controls no-print">
-    <button id="darkToggle">Enable Dark Mode</button>
-
-    <!-- Firebase status element (keeps the firebase snippet behaviour but integrated) -->
-    <div id="firebase-status" class="firebase-status" aria-live="polite">Firebase: loading…</div>
-
-    <div style="font-size:13px; opacity:0.9;">
-      (Highlight shows <strong>today</strong> in browser only; disabled when printing)
-    </div>
+    <button id="darkToggle">Dark Mode</button>
   </div>
 
   <div class="wrap">
@@ -304,7 +287,7 @@
           <td></td>
         </tr>
 
-        <!-- 01:00 PM (break row) -->
+        <!-- 01:00 PM -->
         <tr>
           <td class="time-col">01:00 PM</td>
           <td colspan="7"></td>
@@ -358,7 +341,7 @@
           <td></td>
         </tr>
 
-        <!-- 06:00 PM (blank row requested) -->
+        <!-- 06:00 PM -->
         <tr>
           <td class="time-col">06:00 PM</td>
           <td></td>
@@ -424,15 +407,10 @@
     </tbody>
   </table>
 
-  <!-- Firebase integration + timetable JS -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // Update firebase status element (keeps behavior from your Firebase snippet)
       const statusEl = document.getElementById('firebase-status');
       if (statusEl) statusEl.textContent = 'Firebase SDK loading…';
-
-      // Attempt to detect loaded firebase features once SDK init runs
-      // Wrap in try/catch in case firebase isn't initialized yet
       try {
         const app = firebase.app();
         const features = [
@@ -455,7 +433,6 @@
           }
         }
       } catch (e) {
-        // If app() throws because init.js hasn't run yet, wait a short time and try again
         setTimeout(() => {
           try {
             const app2 = firebase.app();
@@ -486,34 +463,27 @@
       }
     });
 
-    // Timetable highlighting + dark mode logic (unchanged, robust)
     (function () {
       const table = document.getElementById('timetable');
-      // JS Date.getDay(): 0=Sun .. 6=Sat
       const todayD = new Date().getDay();
-      // header nth-child index mapping: 1=time, 2=Mon ... 8=Sun
       const headerNth = (todayD === 0) ? 8 : (todayD + 1);
       const wrap = document.querySelector('.wrap');
 
-      // highlight header
       const headCell = table.querySelector(`thead tr th:nth-child(${headerNth})`);
       if (headCell) headCell.classList.add('today');
 
-      // Build occupancy grid (rows x 7 day-columns). Indexing:
-      // - dayCols: 0..6 mapping to header columns Mon..Sun
       const tbody = table.tBodies[0];
       const rows = Array.from(tbody.rows);
       const R = rows.length;
-      const C = 7; // Mon..Sun columns
+      const C = 7;
 
-      // initialize grid with nulls
       const grid = Array.from({ length: R }, () => Array(C).fill(null));
 
       for (let r = 0; r < R; r++) {
         const row = rows[r];
         const cells = Array.from(row.querySelectorAll('td')).slice(1);
 
-        let c = 0; // pointer in day columns for this row
+        let c = 0;
         while (c < C && grid[r][c] !== null) c++;
 
         for (let ci = 0; ci < cells.length; ci++) {
@@ -535,8 +505,7 @@
         }
       }
 
-      // Only highlight single-day cells (colspan === 1) to avoid highlighting the big break
-      const targetCol = (todayD === 0) ? 6 : (todayD - 1); // Mon=0..Sun=6
+      const targetCol = (todayD === 0) ? 6 : (todayD - 1);
 
       for (let r = 0; r < R; r++) {
         const cell = grid[r][targetCol];
@@ -545,12 +514,11 @@
         if (colspan === 1) cell.classList.add('today');
       }
 
-      // Dark mode persistence
       const toggle = document.getElementById('darkToggle');
       function applyDark(isDark) {
         document.body.classList.toggle('dark', !!isDark);
         toggle.setAttribute('aria-pressed', !!isDark);
-        toggle.textContent = !!isDark ? 'Disable Dark Mode' : 'Enable Dark Mode';
+        toggle.textContent = !!isDark ? 'White Mode' : 'Dark Mode';
       }
 
       const stored = localStorage.getItem('tt-dark');
@@ -562,7 +530,6 @@
         localStorage.setItem('tt-dark', now ? '1' : '0');
       });
 
-      // keyboard shortcut Ctrl/Cmd + D
       document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
           e.preventDefault();
@@ -608,7 +575,7 @@
         clearTimeout(scrollTimer);
         scrollTimer = setTimeout(() => {
           wrap.classList.remove('scrolling');
-        }, 200); // shadow fades back after 200ms of no scroll
+        }, 200);
       });
     })();
   </script>
