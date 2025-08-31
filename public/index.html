@@ -475,6 +475,7 @@
       const todayD = new Date().getDay();
       // header nth-child index mapping: 1=time, 2=Mon ... 8=Sun
       const headerNth = (todayD === 0) ? 8 : (todayD + 1);
+      const wrap = document.querySelector('.wrap');
 
       // highlight header
       const headCell = table.querySelector(`thead tr th:nth-child(${headerNth})`);
