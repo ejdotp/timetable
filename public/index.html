@@ -182,6 +182,12 @@
       }
     }
 
+    /* stronger shadow only while scrolling */
+    .wrap.scrolling th.time-col,
+    .wrap.scrolling td.time-col {
+      box-shadow: 6px 0 10px -4px rgba(0, 0, 0, 0.15);
+    }
+
     .legend {
       margin-top: 14px;
       max-width: 980px;
@@ -586,6 +592,21 @@
       window.addEventListener('resize', () => setTimeout(() => centerTodayInView(true), 120));
       window.addEventListener('orientationchange', () => setTimeout(() => centerTodayInView(true), 200));
 
+    })();
+  </script>
+  <script>
+    (function () {
+      const wrap = document.querySelector('.wrap');
+      if (!wrap) return;
+
+      let scrollTimer;
+      wrap.addEventListener('scroll', () => {
+        wrap.classList.add('scrolling');
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(() => {
+          wrap.classList.remove('scrolling');
+        }, 200); // shadow fades back after 200ms of no scroll
+      });
     })();
   </script>
 
