@@ -77,7 +77,10 @@
       border-radius: 8px;
       border: 1px solid var(--border);
       padding: 6px;
+      background: var(--bg);
+      -webkit-overflow-scrolling: touch;
     }
+
 
     table.timetable {
       border-collapse: collapse;
@@ -101,24 +104,28 @@
       position: sticky;
       left: 0;
       z-index: 100;
-      /* stays above scrolled cells */
-      background: var(--bg);
-      /* solid background */
+      /* keep above other cells */
+      background-color: var(--bg) !important;
+      /* solid background for light/dark */
       border-right: 2px solid var(--border);
-      /* keep border visible */
+      /* visible border */
       min-width: 92px;
       width: 92px;
       text-align: center;
       font-weight: 700;
       padding: 10px;
       box-shadow: 4px 0 8px -4px rgba(0, 0, 0, 0.06);
-      /* subtle separator shadow */
+      /* subtle shadow for separation */
+      background-clip: padding-box;
+      /* prevents border bleed */
+      transform: translateZ(0);
+      /* avoids flicker in some browsers */
     }
 
+    /* header time cell slightly higher stacking */
     thead th.time-col {
       z-index: 110;
     }
-
 
     td {
       padding: 10px;
@@ -170,6 +177,8 @@
       th.time-col,
       td.time-col {
         position: static;
+        box-shadow: none !important;
+        border-right: 2px solid var(--border) !important;
       }
     }
 
