@@ -536,7 +536,7 @@
       function applyDark(isDark) {
         document.body.classList.toggle('dark', !!isDark);
         toggle.setAttribute('aria-pressed', !!isDark);
-        toggle.textContent = !!isDark ? 'White Mode' : 'Dark Mode';
+        toggle.textContent = !!isDark ? 'Light Mode' : 'Dark Mode';
       }
 
       const stored = localStorage.getItem('tt-dark');
