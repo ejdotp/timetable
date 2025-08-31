@@ -100,15 +100,25 @@
     td.time-col {
       position: sticky;
       left: 0;
-      z-index: 10;
+      z-index: 100;
+      /* stays above scrolled cells */
       background: var(--bg);
+      /* solid background */
       border-right: 2px solid var(--border);
+      /* keep border visible */
       min-width: 92px;
       width: 92px;
       text-align: center;
       font-weight: 700;
       padding: 10px;
+      box-shadow: 4px 0 8px -4px rgba(0, 0, 0, 0.06);
+      /* subtle separator shadow */
     }
+
+    thead th.time-col {
+      z-index: 110;
+    }
+
 
     td {
       padding: 10px;
@@ -540,6 +550,32 @@
           toggle.click();
         }
       });
+
+      function centerTodayInView(smooth = true) {
+        try {
+          const headerIndex = (todayD === 0) ? 8 : (todayD + 1); // Sunday=8th col
+          const hdr = table.querySelector(`thead tr th:nth-child(${headerIndex})`);
+          if (!hdr) return;
+
+          const hdrRect = hdr.getBoundingClientRect();
+          const wrapRect = wrap.getBoundingClientRect();
+          const delta = (hdrRect.left + hdrRect.width / 2) - (wrapRect.left + wrapRect.width / 2);
+          const target = wrap.scrollLeft + delta;
+
+          if (smooth && 'scrollTo' in wrap) {
+            wrap.scrollTo({ left: target, behavior: 'smooth' });
+          } else {
+            wrap.scrollLeft = target;
+          }
+        } catch (err) {
+          console.error('centerTodayInView error', err);
+        }
+      }
+
+      setTimeout(() => centerTodayInView(true), 160);
+      window.addEventListener('resize', () => setTimeout(() => centerTodayInView(true), 120));
+      window.addEventListener('orientationchange', () => setTimeout(() => centerTodayInView(true), 200));
+
     })();
   </script>
 
