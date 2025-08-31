@@ -6,3 +6,4 @@
 ### Firebase Patch ###
 .runtimeconfig.json
 .firebase/
+.github/
