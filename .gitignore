@@ -6,4 +6,3 @@
 ### Firebase Patch ###
 .runtimeconfig.json
 .firebase/
-firebase-debug.log

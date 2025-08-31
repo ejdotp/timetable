@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Timetable — final fix</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --text: #111;
+            --muted: #f6f8fa;
+            --border: #2f2f2f;
+            --highlight: #fff3bf;
+            --accent: #0b69a3;
+        }
+
+        body.dark {
+            --bg: #0f1113;
+            --text: #e6eef6;
+            --muted: #111316;
+            --border: #999999;
+            --highlight: #5a4300;
+        }
+
+        body {
+            margin: 18px;
+            font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+            background: var(--bg);
+            color: var(--text);
+            transition: background .18s, color .18s;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        button#darkToggle {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            background: transparent;
+            color: var(--text);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .wrap {
+            overflow: auto;
+            /* enables horizontal scrolling */
+            border-radius: 8px;
+            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 6px;
+        }
+
+        table.timetable {
+            border-collapse: collapse;
+            min-width: 980px;
+            /* ensure horizontal scroll on narrow viewports */
+            width: 100%;
+            table-layout: fixed;
+            font-size: 14px;
+            background: var(--bg);
+        }
+
+        thead th {
+            background: var(--muted);
+            padding: 10px;
+            border: 2px solid var(--border);
+            /* darker borders */
+            text-align: left;
+            font-weight: 700;
+        }
+
+        th.time-col,
+        td.time-col {
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            background: var(--bg);
+            border-right: 2px solid var(--border);
+            min-width: 92px;
+            width: 92px;
+            text-align: center;
+            font-weight: 700;
+            padding: 10px;
+        }
+
+        td {
+            padding: 10px;
+            border: 2px solid var(--border);
+            vertical-align: middle;
+            height: 60px;
+            word-wrap: break-word;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .abbr {
+            display: block;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .room {
+            display: block;
+            font-size: 12px;
+            color: var(--text);
+            margin-top: 4px;
+            opacity: 0.95;
+        }
+
+        tbody tr:nth-child(even) td {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        /* highlight via .today on header or cells (screen only) */
+        @media screen {
+            thead th.today {
+                background: var(--highlight) !important;
+            }
+
+            td.today {
+                background: var(--highlight) !important;
+            }
+        }
+
+        /* printing: disable highlight & controls, remove sticky behaviour */
+        @media print {
+
+            thead th.today,
+            td.today {
+                background: transparent !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            th.time-col,
+            td.time-col {
+                position: static;
+            }
+
+            /* avoid sticky in print */
+        }
+
+        /* legend */
+        .legend {
+            margin-top: 14px;
+            max-width: 980px;
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .legend th,
+        .legend td {
+            padding: 8px;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+
+        .legend thead th {
+            background: var(--muted);
+            font-weight: 700;
+        }
+
+        @media (max-width:760px) {
+            table.timetable {
+                font-size: 13px;
+                min-width: 940px;
+            }
+
+            .legend {
+                min-width: 940px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="controls no-print" aria-hidden="false">
+        <button id="darkToggle" aria-pressed="false">Enable Dark Mode</button>
+        <div style="font-size:13px; color:var(--text); opacity:0.9;">
+            (Highlight shows <strong>today</strong> in browser only; disabled when printing)
+        </div>
+    </div>
+
+    <div class="wrap" role="region" aria-label="Weekly timetable">
+        <table class="timetable" id="timetable" aria-describedby="legend">
+            <thead>
+                <tr>
+                    <th class="time-col">Time</th>
+                    <th>Mon</th>
+                    <th>Tue</th>
+                    <th>Wed</th>
+                    <th>Thu</th>
+                    <th>Fri</th>
+                    <th>Sat</th>
+                    <th>Sun</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 08:00 AM -->
+                <tr>
+                    <td class="time-col">08:00 AM</td>
+                    <td><span class="abbr">MG</span><span class="room">E311</span></td>
+                    <td rowspan="2"><span class="abbr">PR</span><span class="room">E125</span></td> <!-- Tue 08-10 -->
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+
+                <!-- 09:00 AM -->
+                <tr>
+                    <td class="time-col">09:00 AM</td>
+                    <td><span class="abbr">SE</span><span class="room">E311</span></td>
+                    <td rowspan="2"><span class="abbr">DM</span><span class="room">E311</span></td> <!-- Wed 09-11 -->
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+
+                <!-- 10:00 AM -->
+                <tr>
+                    <td class="time-col">10:00 AM</td>
+                    <td><span class="abbr">DL</span><span class="room">E311</span></td>
+                    <td><span class="abbr">LLM</span><span class="room">E311</span></td> <!-- Tue 10-11 -->
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+
+                <!-- 11:00 AM -->
+                <tr>
+                    <td class="time-col">11:00 AM</td>
+                    <td rowspan="2"><span class="abbr">PR</span><span class="room">E125</span></td> <!-- Mon 11-13 -->
+                    <td><span class="abbr">MG</span><span class="room">E311</span></td>
+                    <td rowspan="2"><span class="abbr">PR</span><span class="room">E125</span></td> <!-- Wed 11-13 -->
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+
+                <!-- 12:00 PM -->
+                <tr>
+                    <td class="time-col">12:00 PM</td>
+                    <!-- Mon PR continues -->
+                    <td><span class="abbr">SE</span><span class="room">E311</span></td>
+                    <!-- Wed PR continues -->
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+
+                <!-- 01:00 PM (break row) -->
+                <tr>
+                    <td class="time-col">01:00 PM</td>
+                    <td colspan="7"></td> <!-- do NOT highlight this row even if it contains today -->
+                </tr>
+
+                <!-- 02:00 PM -->
+                <tr>
+                    <td class="time-col">02:00 PM</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td rowspan="2"><span class="abbr">LLM</span><span class="room">E311</span></td>
+                    <!-- Thu 2-4 (2 rows) -->
+                    <td rowspan="2"><span class="abbr">DM</span><span class="room">E311</span></td> <!-- Fri 2-4 -->
+                    <td><span class="abbr">MG</span><span class="room">E311</span></td> <!-- Sat 2-3 -->
+                    <td></td>
+                </tr>
+
+                <!-- 03:00 PM -->
+                <tr>
+                    <td class="time-col">03:00 PM</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <!-- Thu LLM continues -->
+                    <!-- Fri DM continues -->
+                    <td><span class="abbr">LLM</span><span class="room">E311</span></td> <!-- Sat 3 -->
+                    <td></td>
+                </tr>
+
+                <!-- 04:00 PM -->
+                <tr>
+                    <td class="time-col">04:00 PM</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td><span class="abbr">MG</span><span class="room">E311</span></td>
+                    <td rowspan="2"><span class="abbr">DL</span><span class="room">E311</span></td> <!-- Fri 4-5 -->
+                    <td rowspan="2"><span class="abbr">SE</span><span class="room">E311</span></td> <!-- Sat 4-5 -->
+                    <td></td>
+                </tr>
+
+                <!-- 05:00 PM -->
+                <tr>
+                    <td class="time-col">05:00 PM</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td><span class="abbr">DL</span><span class="room">E311</span></td> <!-- Thu 5 -->
+                    <!-- Fri DL and Sat SE continue via rowspan -->
+                    <td></td>
+                </tr>
+
+                <!-- 06:00 PM (blank row requested) -->
+                <tr>
+                    <td class="time-col">06:00 PM</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+
+            </tbody>
+        </table>
+    </div>
+
+    <h3 id="legend">Legend</h3>
+    <table class="legend" role="table" aria-label="Legend">
+        <thead>
+            <tr>
+                <th>Abbrev</th>
+                <th>Subject (full)</th>
+                <th>Subject Code</th>
+                <th>Teacher</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>PR</strong></td>
+                <td>Practical Robotics Projects with Arduino</td>
+                <td>CSE4571</td>
+                <td>Suprava R. Laha</td>
+            </tr>
+            <tr>
+                <td><strong>SE</strong></td>
+                <td>Software Engineering Approach</td>
+                <td>CSE4658</td>
+                <td>Rashmi Maheshwari</td>
+            </tr>
+            <tr>
+                <td><strong>DL</strong></td>
+                <td>Deep Learning using Python</td>
+                <td>CSE4685</td>
+                <td>Avinash Potluri</td>
+            </tr>
+            <tr>
+                <td><strong>DM</strong></td>
+                <td>Data Mining & Predictive Analytics</td>
+                <td>CSE4859</td>
+                <td>Rina Mahakud</td>
+            </tr>
+            <tr>
+                <td><strong>LLM</strong></td>
+                <td>Large Language Models</td>
+                <td>CSE4375</td>
+                <td>RUBY</td>
+            </tr>
+            <tr>
+                <td><strong>MG</strong></td>
+                <td>Management Topics in Environmental Studies</td>
+                <td>CHM2049</td>
+                <td>Sulochana Singh</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        (function () {
+            const table = document.getElementById('timetable');
+            // JS Date.getDay(): 0=Sun .. 6=Sat
+            const todayD = new Date().getDay();
+            // header nth-child index mapping: 1=time, 2=Mon ... 8=Sun
+            const headerNth = (todayD === 0) ? 8 : (todayD + 1);
+
+            // highlight header
+            const headCell = table.querySelector(`thead tr th:nth-child(${headerNth})`);
+            if (headCell) headCell.classList.add('today');
+
+            // Build occupancy grid (rows x 7 day-columns). Indexing:
+            // - dayCols: 0..6 mapping to header columns Mon..Sun
+            // We'll iterate tbody rows and fill grid cell refs respecting rowspans/colspans.
+            const tbody = table.tBodies[0];
+            const rows = Array.from(tbody.rows);
+            const R = rows.length;
+            const C = 7; // Mon..Sun columns
+
+            // initialize grid with nulls
+            const grid = Array.from({ length: R }, () => Array(C).fill(null));
+
+            for (let r = 0; r < R; r++) {
+                const row = rows[r];
+                // skip the time-col cell when processing
+                // build list of day cells (all td except the first cell which is time-col)
+                // some rows have first td as time-col; assume it is present as first cell
+                const cells = Array.from(row.querySelectorAll('td')).slice(1);
+
+                let c = 0; // pointer in day columns for this row
+                // skip already-filled columns (from previous rowspan) to find first free slot
+                while (c < C && grid[r][c] !== null) c++;
+
+                for (let ci = 0; ci < cells.length; ci++) {
+                    // find next free slot
+                    while (c < C && grid[r][c] !== null) c++;
+                    if (c >= C) break; // no free slot left (shouldn't normally happen)
+
+                    const cell = cells[ci];
+                    const colspan = Math.max(1, parseInt(cell.getAttribute('colspan') || '1', 10));
+                    const rowspan = Math.max(1, parseInt(cell.getAttribute('rowspan') || '1', 10));
+
+                    // Fill grid for this cell across colspan x rowspan
+                    for (let rr = 0; rr < rowspan; rr++) {
+                        for (let cc = 0; cc < colspan; cc++) {
+                            const rrIdx = r + rr;
+                            const ccIdx = c + cc;
+                            // Guard: if we exceed rows, extend grid rows (rare)
+                            if (rrIdx < R && ccIdx < C) {
+                                grid[rrIdx][ccIdx] = cell;
+                            }
+                        }
+                    }
+
+                    // advance column pointer past this cell's columns
+                    c += colspan;
+                }
+            }
+
+            // Now highlight the appropriate cell for each row for today's column,
+            // but DO NOT highlight cells that have colspan > 1 (this prevents marking the large break row)
+            const targetCol = (todayD === 0) ? 6 : (todayD - 1); // Mon=0..Sun=6
+
+            for (let r = 0; r < R; r++) {
+                const cell = grid[r][targetCol];
+                if (!cell) continue;
+                const colspan = Math.max(1, parseInt(cell.getAttribute('colspan') || '1', 10));
+                // Only highlight if this cell's colspan is exactly 1 (i.e., a single-day cell).
+                // If colspan > 1 (like the 01:00 PM break with colspan=7), skip highlighting it.
+                if (colspan === 1) {
+                    cell.classList.add('today');
+                }
+            }
+
+            // --- Dark mode persistence ---
+            const toggle = document.getElementById('darkToggle');
+            function applyDark(isDark) {
+                document.body.classList.toggle('dark', !!isDark);
+                toggle.setAttribute('aria-pressed', !!isDark);
+                toggle.textContent = !!isDark ? 'Disable Dark Mode' : 'Enable Dark Mode';
+            }
+
+            const stored = localStorage.getItem('tt-dark');
+            applyDark(stored === '1');
+
+            toggle.addEventListener('click', () => {
+                const now = !document.body.classList.contains('dark');
+                applyDark(now);
+                localStorage.setItem('tt-dark', now ? '1' : '0');
+            });
+
+            // keyboard shortcut Ctrl/Cmd + D
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+                    e.preventDefault();
+                    toggle.click();
+                }
+            });
+        })();
+    </script>
+
+</body>
+
+</html>
